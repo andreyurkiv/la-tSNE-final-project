@@ -1,3 +1,4 @@
 **/.ipynb_checkpoints/
 *.ini
-**/.ipynb_checkpoints/*
+doc/.ipynb_checkpoints/*
+doc/.ipynb_checkpoints
