@@ -2,3 +2,11 @@
 *.ini
 doc/.ipynb_checkpoints/*
 doc/.ipynb_checkpoints
+
+# latex files
+
+*.aux
+*.log
+*.gz
+*.tex
+
