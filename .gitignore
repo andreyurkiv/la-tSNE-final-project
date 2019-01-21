@@ -1,15 +1,12 @@
-**/.ipynb_checkpoints/
+**/.ipynb_checkpoints
+**/__pycache__
 *.ini
-doc/.ipynb_checkpoints/*
-doc/.ipynb_checkpoints
 
-src/data/
+src/data/lego
 
 # latex files
 
 *.aux
 *.log
 *.gz
-*.tex
-
-*.Rhistory
+.Rhistory
