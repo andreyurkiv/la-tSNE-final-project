@@ -3,6 +3,8 @@
 doc/.ipynb_checkpoints/*
 doc/.ipynb_checkpoints
 
+src/data/
+
 # latex files
 
 *.aux
@@ -10,3 +12,4 @@ doc/.ipynb_checkpoints
 *.gz
 *.tex
 
+*.Rhistory
