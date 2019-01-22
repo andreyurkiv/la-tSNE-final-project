@@ -2,12 +2,13 @@ import numpy as np
 
 
 class tSNE():
-    def __init__(self, X=None, out_dims=2, perplexity=30.0, learning_rate=200.0,
-                 n_iter=1000, min_grad_norm=1e-07, random_seed=None):
+    def __init__(self, X=None, out_dims=2, perplexity=30.0, early_exaggeration=4.,
+                 learning_rate=200.0, n_iter=1000, min_grad_norm=1e-07, random_seed=None):
         """t-distributed Stochastic Neighbor Embedding."""
         self.X = X
         self.out_dims = out_dims
         self.perplexity = perplexity
+        self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.min_grad_norm = min_grad_norm
@@ -76,6 +77,7 @@ class tSNE():
     def _tsne(self, X):
         if self.random_seed:
             np.random.seed(self.random_seed)
+        X = X / np.max(np.abs(X))  # to avoid div by zero later
         # recomended to use PCA for data preprocessing to reduce dimensionality
         # if in_dims is quite a big number (e. g. 100+)
         # X = self.pca(X, initial_dims).real
@@ -93,7 +95,7 @@ class tSNE():
         P = self._pairwise_dist(X, 1e-5)
         P = P + np.transpose(P)
         P = P / np.sum(P)
-        # P = P * 4. # early exaggeration
+        P = P * self.early_exaggeration
         P = np.maximum(P, 1e-12)
 
         # Run iterations
@@ -127,11 +129,11 @@ class tSNE():
             # Compute current value of cost function
             if (iter + 1) % 10 == 0:
                 C = np.sum(P * np.log(P / Q))
-                print("Iteration %d: error is %f" % (iter + 1, C))
+                print(f"Iteration {iter + 1}: error (cost) is {round(C, 5)}\r", end='')
 
-            # Stop lying about P-values
-            # if iter == 100:
-            #     P = P / 4.
+            # Stop early exaggeration for P-values
+            if iter == 100:
+                P = P / self.early_exaggeration
 
         self.embeddings_ = Y
         return Y
