@@ -2,8 +2,11 @@
 **/__pycache__
 *.ini
 
+src/data/lego
+
 # latex files
 
 *.aux
 *.log
 *.gz
+.Rhistory
