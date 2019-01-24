@@ -119,6 +119,26 @@ Modern data often contains hundreds or even thousands of features. And classical
 
 Another approach to this problem lies in the field of dimensionality reduction. We can apply classical plotting methods (for example, scatter plots) for the data obtained by decreasing the dimension of the original data set. Dimensionality reduction techniques differ substantially from visualization techniques because they are aimed not to make data more visually appealing or understandable, but to preserve as much of the significant structure of the high-dimensional data as possible in its low-dimensional representation \cite{tsnearticle}.
 
+\section{Related work}
+
+As we said, there exists two main approaches to the problem of visualization
+of high-dimentional data. First is to use some strictly visualization technique
+for high-dimentional data and second is to apply dimentionality reduction and then plot generated attributes in two or three dimentions using some classical
+visualization methods \cite{tsnearticle}. \\
+
+
+Some famous techniques for visualization of high-dimentional data are: icono-
+graphic displays such as Chernoff faces \cite{chernoff}, pixel-based techniques \cite{keim}, and those that
+represent the dimentions in the data as vertices in a graph.\\
+
+
+There are much more dimentionality reduction techniques, both linear and
+non-linear ones. The most important linear dimentionality reduction techniques
+are PCA (Principal Component Analysis)\cite{pca} and classical multidimentional scal-
+ing \cite{mds}. Those two focus on keeping the low-dimentional representation of dis-
+similar datapoints far apart. Some famous non-linear dimentionality reduction
+techniques are: Locally Linear Embedding \cite{lle}, Stochastic Neighbor Embedding \cite{snearticle}, Isomap \cite{isomap}, Laplacian Eigenmaps \cite{lapeig} and others.
+
 \section{Problem setting}
 
 The most important goal of visualization of multidimensional data is to correctly identify clusters of similar data points. This is crucial when we are working on unsupervised learning problem and need to know for sure what number of distinct clusters can our data set be divided in without losing valuable information about inner structure of our data.\\
@@ -127,30 +147,26 @@ The most important goal of visualization of multidimensional data is to correctl
 
 $t$-SNE ($t$-distributed Stochastic Neighbor Embedding) algorithm is aimed to overcome those limitations by identifying the relevant patterns using the approach in which similar objects are modeled by nearby points and dissimilar objects are modeled by distant points with high probability \cite{tsnearticle}. 
 
-\section{Related work}
-
-Extensive work have been done in this area. 
-
 \section{Approach to Solution}
 
 Before we start discuss a solution (implementation) of $t$-SNE, let's have a little overview about classic SNE \cite{snearticle}.\\
+
 With high-dimensional input space $X$, we need to transform datapoints in output (usually 2-3 dimensions) space $Y$. The goal is not to lose much structure or patterns in our data.\\
-SNE approach is to start with transformation of pairwise Euclidean distance between datapoints into conditional probabilities (similarities):
+SNE approach is to start with transformation of pairwise Euclidean distance between datapoints into conditional probabilities (similarities):\\
 $$ p_{j|i} = \frac{exp(-||x_i - x_j||^2 / 2 \sigma_i^2)}{\sum_{k \ne i}{exp(-||x_i - x_k||^2 / 2 \sigma_i^2)}} (1) $$
-In other words, this formula shows how close $x_j$ point is to $x_i$ one with the Gaussian (variance of $\sigma$) near $x_j$ datapoint. $\sigma$ will be different for each point with logic, that with high density variance become less. For that, it is used metric of perplexity:
+In other words, this formula shows how close $x_j$ point is to $x_i$ one with the Gaussian (variance of $\sigma$) near $x_j$ data point. $\sigma$ will be different for each point with logic, that with high density variance become less. For that, it is used metric of perplexity:\\
 $$ Perp(P_i) = 2^{H(P_i)} $$
-$H(P_i)$ is the Shannon entropy of $P_i$ in bits:
+$H(P_i)$ is the Shannon entropy of $P_i$ in bits:\\
 $$ H(P_i) = -\sum_j{}p_{j|i} log_2{p_{j|i}} (2) $$
-Perplexity could be interpret as "effective count of neighbours for $x_i$". It is a hyperparameter in $t$-SNE algorithm. $\sigma$ calculated due to binary search for each $x_i$, $x_j$ pair (the perplexity increases monotonically with the variance).\\
-For output, target datapoints $Y$ there are similarity with the variance of $\sigma = 1/\sqrt{2}$:
+Perplexity could be interpret as "effective count of neighbors for $x_i$". It is a hyperparameter in $t$-SNE algorithm. $\sigma$ calculated due to binary search for each $x_i$, $x_j$ pair (the perplexity increases monotonically with the variance).\\
+For output, target data points $Y$ there are similarity with the variance of $\sigma = 1/\sqrt{2}$:\\
 $$ q_{j|i} = \frac{exp(-||y_i - y_j||^2)}{\sum_{k \ne i}{exp(-||y_i - y_k||^2)}} $$
 
-Obvious, $p_{j|i}$ and $q_{j|i}$ should be equivalent to each other with perfect converting. The Kullback-
-Leibler divergence (the cross-entropy up to an additive constant here) - metric to determine cost function (as sum) and then try to minimize it using gradient descent method.
+Obvious, $p_{j|i}$ and $q_{j|i}$ should be equivalent to each other with perfect converting. The Kullback-Leibler divergence (the cross-entropy up to an additive constant here) - metric to determine cost function (as sum) and then try to minimize it using gradient descent method.\\
 $$ C = \sum_i{KL(P_i||Q_i)} = \sum_i{\sum_j{p_{j|i}log{\frac{p_{j|i}}{q_{j|i}}}}} (3) $$
-And the gradient (quite simple):
+And the gradient (quite simple):\\
 $$ \frac{\partial C}{\partial y_i} = 2 \sum_j{(p_{j|i} - q_{j|i} + p_{i|j} - q_{i|j})(y_i - y_j)} $$
-$Y$ are initiated randomly from an isotropic Gaussian with small variance that is centered around the origin. A large momentum term is added to the gradient for faster optimization and to avoid local minima. Final gradient update:
+$Y$ are initiated randomly from an isotropic Gaussian with small variance that is centered around the origin. A large momentum term is added to the gradient for faster optimization and to avoid local minima. Final gradient update:\\
 $$ Y^{(t)} = Y^{(t-1)} + \eta \frac{\partial C}{\partial Y} + \alpha(t)(Y^{(t-1)} - Y^{(t-2)})$$
 $t$ - calculating iteration, $\eta$ - the learning rate (size of "step"), $\alpha(t)$ - the momentum at iteration $t$.\\
 
@@ -168,10 +184,10 @@ $$ q_{ij} = \frac{(1 + ||y_i - y_j||^2)^{-1}}{\sum_{k \ne l}{(1 + ||y_k - y_l||^
 $$ \frac{\partial C}{\partial y_i} = 4 \sum_j{(p_{ij} - q_{ij})(y_i - y_j)(1 + ||y_i - y_j||^2)^{-1}} (5) $$
 If we speak about embeddings structure: SNE doesn't push enough away datapoints in low-dimensional space which have big distance in high-dimensional, while $t$-SNE does.\\
 
-Whole simple algorithm \cite{tsnearticle}:\\
+Whole simple algorithm \cite{tsnearticle}:\\\\
 Data: dataset $X = {x_1, x_2, \dots, x_n}$,\\
-cost function parameters: perplexity $Perp$,\\
-optimization parameters: number of iterations $T$, learning rate $\eta$, momentum $\alpha(t)$.\\
+Cost function parameters: perplexity $Perp$,\\
+Optimization parameters: number of iterations $T$, learning rate $\eta$, momentum $\alpha(t)$.\\
 Result: low-dimensional data representation $Y(T) = {y_1, y_2, \dots, y_n}$.\\
 begin\\
 \hspace*{1cm}compute pairwise affinities $p_{j|i}$ with perplexity $Perp$ (eq. 1)\\
@@ -192,7 +208,7 @@ To have a clear understanding, we have implemented $t$-SNE with Python and explo
 
 \section{Evaluation}
 
-Since $t$-SNE is primarily visualization technique, in order to evaluate its performance and visualizational capacity we need to compare visualization produced by t-SNE with the ones obtained using other non-parametric visualization techniques for multidimensional data, such as Multidimensional scaling using SMACOF (Scaling by Majorizing a Complicated Function) algorithm, Isomap, Locally Linear Embedding, Principal Components Analysis and Laplacian Eigenmaps. PCA is not usually used for visualization, but we decided that it would be a good idea to show how the visualizations obtained from manifold learning algorithms differ from those obtained from classic dimensionality reduction technique.
+Since $t$-SNE is primarily visualization technique, in order to evaluate its performance and visualizational capacity we need to compare visualization produced by t-SNE with the ones obtained using other non-parametric visualization techniques for multidimensional data, such as Multidimensional scaling \cite{mds} using SMACOF (Scaling by Majorizing a Complicated Function) algorithm, Isomap \cite{isomap}, Locally Linear Embedding \cite{lle}, Principal Components Analysis \cite{pca} and Laplacian Eigenmaps \cite{lapeig}. PCA is not usually used for visualization, but we decided that it would be a good idea to show how the visualizations obtained from manifold learning algorithms differ from those obtained from classic dimensionality reduction technique.
 
 \subsection{Data sets}
 
@@ -363,22 +379,56 @@ In visualization, the aim is to see the structure in the training
 data, not to generalize to held out test data. And $t$-SNE is a good choice for it. Exactly local patterns have to be discovered for proper visualization.\\
 We reach our goal - successful implementation of $t$-SNE and comparison with others visualization approaches done.
 
-\begin{thebibliography}{4}
+\begin{thebibliography}{6}
 	\bibitem{tsnearticle} 
-	Laurens van der Maaten, Geoffrey Hinton.
+	L. van der Maaten, G. Hinton.
 	\textit{Visualizing Data using t-SNE}. 
-	Journal of Machine Learning Research 9 (2008) 2579-2605
+	Journal of Machine Learning Research, 9 (2008), 2579-2605.
 	
 	\bibitem{tsnewiki} 
 	Wikipedia contributors
 	\textit{t-distributed stochastic neighbor embedding}. 
-	\\\texttt{https://en.wikipedia.org/wiki/T-distributed\_stochastic\_neighbor\_embedding}
+	\texttt{https://en.wikipedia.org/wiki/T-distributed\_stochastic\_neighbor\_embedding}
 	
 	\bibitem{snearticle}
-	Geoffrey Hinton and Sam Roweis
+	G. Hinton and S. Roweis
 	\textit{Stochastic Neighbor Embedding}.
 	\texttt{https://papers.nips.cc/paper/2276-stochastic-neighbor-embedding.pdf}
 	
+	\bibitem{chernoff}
+	H. Chernoff
+	\textit{The Use of Faces to Represent Points in K-Dimensional Space Graphically}
+	Journal of the American Statistical Association. American Statistical Association. 68 (342): 361–368.
+	
+	\bibitem{keim}
+	D.A. Keim
+	\textit{Designing pixel-oriented visualization techniques: Theory and applications}
+	IEEE Transactions on Visualization and Computer Graphics, 6(1):59–78, 2000.
+	
+	\bibitem{pca}
+	H. Hotelling.
+	\textit{Analysis of a complex of statistical variables into principal components}
+	Journal of Educational Psychology, 24:417–441, 1933.
+	
+	\bibitem{mds}
+	W.S. Torgerson
+	\textit{Multidimensional scaling I: Theory and method}
+	Psychometrika, 17:401–419, 1952.
+	
+	\bibitem{lle}
+	S.T. Roweis, L.K. Saul
+	\textit{Nonlinear dimensionality reduction by Locally Linear Embedding}
+	Science, 290(5500):2323–2326, 2000.
+	
+	\bibitem{isomap}
+	J.B. Tenenbaum, V. de Silva, J.C. Langford
+	\textit{A global geometric framework for nonlinear dimensionality reduction}
+	Science, 290(5500):2319–2323, 2000.
+	
+	\bibitem{lapeig}
+	M. Belkin, P. Niyogi
+	\textit{Laplacian Eigenmaps and spectral techniques for embedding and clustering}
+	Advances in Neural Information Processing Systems, volume 14, 585–591, 2002.
 	
 \end{thebibliography}
 
