@@ -128,13 +128,15 @@ $t$-SNE ($t$-distributed Stochastic Neighbor Embedding) algorithm is aimed to ov
 
 \section{Related work}
 
+Extensive work have been done in this area. 
+
 \section{Approach to Solution}
 
 \section{Solution}
 
 \section{Evaluation}
 
-Since $t$-SNE is primarily visualization technique, in order to evaluate its performance and visualizational capacity we need to compare visualization produced by t-SNE with the ones obtained using other non-parametric visualization techniques for multidimensional data, such as Multidimensional scaling using SMACOF (Scaling by Majorizing a Complicated Function) algorithm, Isomap, Locally Linear Embedding, Principal Components Analysis and Laplacian Eigenmaps. PCA is not usually used for visualization, but we decided that it would be a good idea to show how the visualizations obtained from manifold learning algorithms differ from those obtained from classic dimensionality reduction technique.\\
+Since $t$-SNE is primarily visualization technique, in order to evaluate its performance and visualizational capacity we need to compare visualization produced by t-SNE with the ones obtained using other non-parametric visualization techniques for multidimensional data, such as Multidimensional scaling using SMACOF (Scaling by Majorizing a Complicated Function) algorithm, Isomap, Locally Linear Embedding, Principal Components Analysis and Laplacian Eigenmaps. PCA is not usually used for visualization, but we decided that it would be a good idea to show how the visualizations obtained from manifold learning algorithms differ from those obtained from classic dimensionality reduction technique.
 
 \subsection{Data sets}
 
@@ -142,7 +144,7 @@ In our work we experimented with 2 different data sets: Olivetti faces data set 
 
 Olivetti faces dataset contains 400 $64 \times 64$ grayscale images of faces (10 images for each of 40 subjects). Those images were taken at different time with different details varying, such as face expression, lighting and facial details (absence or presence of glasses). They are labeled according to the identity of the person depicted.\\
 
-Handwritten digits data set consists of 1797 $8 \times 8$ grayscale images of handwritten digits of 10 classes. There are nearly 180 instances per digit class in this data set.\\
+Handwritten digits data set consists of 1797 $8 \times 8$ grayscale images of handwritten digits of 10 classes. There are nearly 180 instances per digit class in this data set.
 
 \subsection{Experimental setup}
 
@@ -297,7 +299,7 @@ First of all, it's not clear whether $t$-SNE can be used for general dimensional
 
 Secondly, the cost function of $t$-SNE algorithm is non-convex, which means that several optimization parameters need to be chosen. The solution obtained depend on the optimization parameters choice and may be different each time it is run from the initial random configuration. But in general, it was shown, that even if the optimization process ends up in the local optima, it still provides a visualization good enough to prefer it instead of other visualization techniques. Besides it, the convexity of the cost function can me misleading, because it is often impossible to optimize the function for large data sets, so some appropriate approximation techniques are used instead. \\
 
-The third weakness of $t$-SNE algorithm is its sensitivity to the intristic dimensionality of the data. This can cause the violation of local linearity assumptions on manifold that $t$-SNE makes \cite{tsnearticle}.\\
+The third weakness of $t$-SNE algorithm is its sensitivity to the intristic dimensionality of the data. This can cause the violation of local linearity assumptions on manifold that $t$-SNE makes \cite{tsnearticle}.
 
 \section{Conclusions}
 
