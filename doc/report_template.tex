@@ -39,6 +39,7 @@
 \usepackage{subcaption}
 \usepackage{float}
 \usepackage[colorinlistoftodos]{todonotes}
+\usepackage{hyperref}
 
 
 
@@ -68,7 +69,7 @@
 \vspace*{1cm}
 
 \HRule \\[0.4cm]
-{ \huge \bfseries Visualization of high-dimentional data using $t$-SNE algorithm}\\[10pt]
+{ \huge \bfseries Visualization of high-dimensional data using $t$-SNE algorithm}\\[10pt]
 {\Large \bfseries Linear Algebra final project report}\\[0.4cm] % Title of your document
 \HRule \\[1cm]
  
@@ -132,7 +133,62 @@ Extensive work have been done in this area.
 
 \section{Approach to Solution}
 
+Before we start discuss a solution (implementation) of $t$-SNE, let's have a little overview about classic SNE \cite{snearticle}.\\
+With high-dimensional input space $X$, we need to transform datapoints in output (usually 2-3 dimensions) space $Y$. The goal is not to lose much structure or patterns in our data.\\
+SNE approach is to start with transformation of pairwise Euclidean distance between datapoints into conditional probabilities (similarities):
+$$ p_{j|i} = \frac{exp(-||x_i - x_j||^2 / 2 \sigma_i^2)}{\sum_{k \ne i}{exp(-||x_i - x_k||^2 / 2 \sigma_i^2)}} (1) $$
+In other words, this formula shows how close $x_j$ point is to $x_i$ one with the Gaussian (variance of $\sigma$) near $x_j$ datapoint. $\sigma$ will be different for each point with logic, that with high density variance become less. For that, it is used metric of perplexity:
+$$ Perp(P_i) = 2^{H(P_i)} $$
+$H(P_i)$ is the Shannon entropy of $P_i$ in bits:
+$$ H(P_i) = -\sum_j{}p_{j|i} log_2{p_{j|i}} (2) $$
+Perplexity could be interpret as "effective count of neighbours for $x_i$". It is a hyperparameter in $t$-SNE algorithm. $\sigma$ calculated due to binary search for each $x_i$, $x_j$ pair (the perplexity increases monotonically with the variance).\\
+For output, target datapoints $Y$ there are similarity with the variance of $\sigma = 1/\sqrt{2}$:
+$$ q_{j|i} = \frac{exp(-||y_i - y_j||^2)}{\sum_{k \ne i}{exp(-||y_i - y_k||^2)}} $$
+
+Obvious, $p_{j|i}$ and $q_{j|i}$ should be equivalent to each other with perfect converting. The Kullback-
+Leibler divergence (the cross-entropy up to an additive constant here) - metric to determine cost function (as sum) and then try to minimize it using gradient descent method.
+$$ C = \sum_i{KL(P_i||Q_i)} = \sum_i{\sum_j{p_{j|i}log{\frac{p_{j|i}}{q_{j|i}}}}} (3) $$
+And the gradient (quite simple):
+$$ \frac{\partial C}{\partial y_i} = 2 \sum_j{(p_{j|i} - q_{j|i} + p_{i|j} - q_{i|j})(y_i - y_j)} $$
+$Y$ are initiated randomly from an isotropic Gaussian with small variance that is centered around the origin. A large momentum term is added to the gradient for faster optimization and to avoid local minima. Final gradient update:
+$$ Y^{(t)} = Y^{(t-1)} + \eta \frac{\partial C}{\partial Y} + \alpha(t)(Y^{(t-1)} - Y^{(t-2)})$$
+$t$ - calculating iteration, $\eta$ - the learning rate (size of "step"), $\alpha(t)$ - the momentum at iteration $t$.\\
+
+Now, we have overview of SNE algorithm. By using classic SNE we can obtain good results. But there might be a problem with cost function optimization and crowding problem. Let's see how $t$-SNE can handle them (or even try to).
+
 \section{Solution}
+
+First, make symmetry properties from conditional probabilities: $p_{ii}$ and $q_{ii} = 0, p_{ij} = p_{ji}, q_{ij} = q_{ji}$ for any $i, j$, and $p_{ij}$:
+$$ p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n} $$
+$n$ - number of datapoints. Now, new cost function and corresponding gradient:
+$$ C = KL(P||Q) = \sum_i{\sum_j{p_{ij}log{\frac{p_{ij}}{q_{ij}}}}} $$
+$$ \frac{\partial C}{\partial y_i} = 4 \sum_j{(p_{ij} - q_{ij})(y_i - y_j)} $$
+Also, if start use Student $t$-distribution it will be less crowding problem (due to heavy tails). $t$ = 1 (a Cauchy distribution):
+$$ q_{ij} = \frac{(1 + ||y_i - y_j||^2)^{-1}}{\sum_{k \ne l}{(1 + ||y_k - y_l||^2)^{-1}}} (4) $$
+$$ \frac{\partial C}{\partial y_i} = 4 \sum_j{(p_{ij} - q_{ij})(y_i - y_j)(1 + ||y_i - y_j||^2)^{-1}} (5) $$
+If we speak about embeddings structure: SNE doesn't push enough away datapoints in low-dimensional space which have big distance in high-dimensional, while $t$-SNE does.\\
+
+Whole simple algorithm \cite{tsnearticle}:\\
+Data: dataset $X = {x_1, x_2, \dots, x_n}$,\\
+cost function parameters: perplexity $Perp$,\\
+optimization parameters: number of iterations $T$, learning rate $\eta$, momentum $\alpha(t)$.\\
+Result: low-dimensional data representation $Y(T) = {y_1, y_2, \dots, y_n}$.\\
+begin\\
+\hspace*{1cm}compute pairwise affinities $p_{j|i}$ with perplexity $Perp$ (eq. 1)\\
+\hspace*{1cm}set $p_{ij} = (p_{j|i} + p_{i|j})/2n$\\
+\hspace*{1cm}sample initial solution $Y(0) = {y_1, y_2, \dots, y_n}$ from $N(0, 10^{-4}I)$\\
+\hspace*{1cm}for $t = 1$ to $T$ do\\
+\hspace*{2cm}compute low-dimensional affinities $q_{ij}$ (eq. 4)\\
+\hspace*{2cm}compute gradient $\frac{\partial C}{\partial y}$ (eq. 5)\\
+\hspace*{2cm}set $Y(t) = Y(t-1) + \eta \frac{\partial C}{\partial y} + \alpha(t)(Y(t-1) - Y(t-2))$\\
+\hspace*{1cm}end\\
+end\\
+
+There are also two hints (tricks) to help achieve better results. "early compression" and "early exaggeration" \cite{tsnearticle}.\\
+
+To have a clear understanding, we have implemented $t$-SNE with Python and explore how it could be used in practice. Here link to our work repository:\\
+
+\url{https://github.com/andreyurkiv/la-tSNE-final-project}
 
 \section{Evaluation}
 
@@ -295,13 +351,17 @@ Another possible solution to this problem is reduce dimensionality of the data s
 
 Our experiments showed that $t$-SNE algorithm strongly outperforms other existing techniques for visualization of multidimensional data sets. But still, it has a number of weaknesses, which we would like to discuss deeper.\\
 
-First of all, it's not clear whether $t$-SNE can be used for general dimensionality reduction purposes, when the data is reduced to more than 3 dimentions. The case is, that the heavy tails of Student $t$-distribution do not allow to extrapolate the behavior of this algorithm in 2 or 3 dimensions to higher ones. In high dimensions area under the heavy tails of Student $t$-distribution amounts to a large portion of the probability mass, which might lead to the situation when local structure of the data is not preserved well. \\
+First of all, it's not clear whether $t$-SNE can be used for general dimensionality reduction purposes, when the data is reduced to more than 3 dimensions. The case is, that the heavy tails of Student $t$-distribution do not allow to extrapolate the behavior of this algorithm in 2 or 3 dimensions to higher ones. In high dimensions area under the heavy tails of Student $t$-distribution amounts to a large portion of the probability mass, which might lead to the situation when local structure of the data is not preserved well. \\
 
 Secondly, the cost function of $t$-SNE algorithm is non-convex, which means that several optimization parameters need to be chosen. The solution obtained depend on the optimization parameters choice and may be different each time it is run from the initial random configuration. But in general, it was shown, that even if the optimization process ends up in the local optima, it still provides a visualization good enough to prefer it instead of other visualization techniques. Besides it, the convexity of the cost function can me misleading, because it is often impossible to optimize the function for large data sets, so some appropriate approximation techniques are used instead. \\
 
 The third weakness of $t$-SNE algorithm is its sensitivity to the intristic dimensionality of the data. This can cause the violation of local linearity assumptions on manifold that $t$-SNE makes \cite{tsnearticle}.
 
 \section{Conclusions}
+
+In visualization, the aim is to see the structure in the training
+data, not to generalize to held out test data. And $t$-SNE is a good choice for it. Exactly local patterns have to be discovered for proper visualization.\\
+We reach our goal - successful implementation of $t$-SNE and comparison with others visualization approaches done.
 
 \begin{thebibliography}{4}
 	\bibitem{tsnearticle} 
@@ -313,6 +373,11 @@ The third weakness of $t$-SNE algorithm is its sensitivity to the intristic dime
 	Wikipedia contributors
 	\textit{t-distributed stochastic neighbor embedding}. 
 	\\\texttt{https://en.wikipedia.org/wiki/T-distributed\_stochastic\_neighbor\_embedding}
+	
+	\bibitem{snearticle}
+	Geoffrey Hinton and Sam Roweis
+	\textit{Stochastic Neighbor Embedding}.
+	\texttt{https://papers.nips.cc/paper/2276-stochastic-neighbor-embedding.pdf}
 	
 	
 \end{thebibliography}
